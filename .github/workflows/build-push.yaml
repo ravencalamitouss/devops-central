@@ -27,11 +27,8 @@ on:
 
     secrets:
       DOCKERHUB_USERNAME:
-        required: true
       DOCKERHUB_TOKEN:
-        required: true
       HELM_REPO_TOKEN:
-        required: true
 
 jobs:
   build:
