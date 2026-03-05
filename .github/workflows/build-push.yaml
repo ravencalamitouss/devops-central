@@ -27,8 +27,11 @@ on:
 
     secrets:
       DOCKERHUB_USERNAME:
+        required: false
       DOCKERHUB_TOKEN:
+        required: false
       HELM_REPO_TOKEN:
+        required: false
 
 jobs:
   build:
@@ -42,8 +45,8 @@ jobs:
       - name: Checkout caller repo (service code)
         uses: actions/checkout@v4
         with:
-          repository: your-org/${{ inputs.service_name }}
-          token: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ravencalamitous/${{ inputs.service_name }}
+          token: ${{ secrets.HELM_REPO_TOKEN }}
           ref: ${{ inputs.branch }}
 
       - name: Set image tag
