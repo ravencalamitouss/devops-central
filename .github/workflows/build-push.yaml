@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       service_name:
-        description: "Name of the service (e.g. logistics-pickup)"
+        description: "Name of the service"
         required: true
         type: string
       environment:
@@ -45,7 +45,7 @@ jobs:
       - name: Checkout caller repo (service code)
         uses: actions/checkout@v4
         with:
-          repository: ravencalamitous/${{ inputs.service_name }}
+          repository: ravencalamitouss/${{ inputs.service_name }}
           token: ${{ secrets.HELM_REPO_TOKEN }}
           ref: ${{ inputs.branch }}
 
