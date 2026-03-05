@@ -1,9 +1,5 @@
 name: Reusable - Build and Push Image
 
-# This is a REUSABLE workflow
-# Only callable by other workflows, not triggered directly
-# All secrets live HERE in devops-central — developers never touch them
-
 on:
   workflow_call:
     inputs:
@@ -29,11 +25,12 @@ on:
         description: "The Docker image tag that was built"
         value: ${{ jobs.build.outputs.image_tag }}
 
-    # Secrets are inherited from devops-central — NOT from caller repo
     secrets:
       DOCKERHUB_USERNAME:
         required: true
       DOCKERHUB_TOKEN:
+        required: true
+      HELM_REPO_TOKEN:
         required: true
 
 jobs:
