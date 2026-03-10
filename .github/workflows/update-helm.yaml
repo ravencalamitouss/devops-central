@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       environment:
-        description: "Target environment: dev or prod"
+        description: "Target environment: dev, staging or prod"
         required: true
         type: string
       image_tag:
@@ -18,12 +18,13 @@ on:
 
     secrets:
       HELM_REPO_TOKEN:
-        required: true
+        required: false
 
 jobs:
   update-helm:
     name: Update Helm - ${{ inputs.service_name }} (${{ inputs.environment }})
     runs-on: ubuntu-latest
+    timeout-minutes: 5
 
     steps:
       - name: Checkout logistics-helm repo
@@ -41,10 +42,13 @@ jobs:
           SERVICE=${{ inputs.service_name }}
           TAG=${{ inputs.image_tag }}
 
-          # Update tag under the correct service key in environment yaml
-          # Example: updates  pickup.tag or delivery.tag
+          # Extract service key: logistics-pickup → pickup
           SERVICE_KEY=$(echo $SERVICE | sed 's/logistics-//')
+
           sed -i "/^${SERVICE_KEY}:/,/tag:/ s/tag:.*/tag: ${TAG}/" environments/${ENV}.yaml
+
+          echo "Updated ${SERVICE_KEY}.tag to ${TAG} in environments/${ENV}.yaml"
+          cat environments/${ENV}.yaml
 
           git config user.name "devops-bot"
           git config user.email "devops-bot@ravencalamitouss.com"

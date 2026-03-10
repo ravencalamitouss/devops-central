@@ -1,14 +1,18 @@
-name: Reusable - Build and Push Image
+name: Reusable - Build, Scan & Push Image
 
 on:
   workflow_call:
     inputs:
       service_name:
-        description: "Name of the service"
+        description: "Name of the service (e.g. logistics-pickup)"
         required: true
         type: string
       environment:
         description: "Target environment: dev or prod"
+        required: true
+        type: string
+      image_tag:
+        description: "Image tag (e.g. dev-abc1234 or v1.0.0)"
         required: true
         type: string
       branch:
@@ -35,14 +39,15 @@ on:
 
 jobs:
   build:
-    name: Build & Push - ${{ inputs.service_name }}
+    name: Build, Scan & Push - ${{ inputs.service_name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
 
     steps:
-      - name: Checkout caller repo (service code)
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           repository: ravencalamitouss/${{ inputs.service_name }}
@@ -53,9 +58,9 @@ jobs:
         id: meta
         run: |
           SHORT_SHA=$(echo ${{ inputs.sha }} | cut -c1-7)
-          TAG="${{ inputs.environment }}-${SHORT_SHA}"
+          TAG="dev-${SHORT_SHA}"
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Built tag: ${TAG}"
+          echo "Image tag: ${TAG}"
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -63,11 +68,28 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ steps.meta.outputs.tag }}
+
+      - name: Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ steps.meta.outputs.tag }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL
+
+      - name: Push image to DockerHub
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ steps.meta.outputs.tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:${{ inputs.environment }}-latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.service_name }}:dev-latest
