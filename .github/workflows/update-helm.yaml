@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       service_name:
-        description: "Name of the service (e.g. logistics-pickup)"
+        description: "Name of the service"
         required: true
         type: string
       environment:
@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       image_tag:
-        description: "Docker image tag to update in helm values"
+        description: "Docker image tag to update"
         required: true
         type: string
 
@@ -45,7 +45,8 @@ jobs:
           # Extract service key: logistics-pickup → pickup
           SERVICE_KEY=$(echo $SERVICE | sed 's/logistics-//')
 
-          sed -i "/^${SERVICE_KEY}:/,/tag:/ s/tag:.*/tag: ${TAG}/" environments/${ENV}.yaml
+          sed -i "/^${SERVICE_KEY}:/,/tag:/ s/tag:.*/tag: ${TAG}/" \
+            environments/${ENV}.yaml
 
           echo "Updated ${SERVICE_KEY}.tag to ${TAG} in environments/${ENV}.yaml"
           cat environments/${ENV}.yaml
