@@ -1,0 +1,62 @@
+name: Reusable - API Test
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: "Name of the service"
+        required: true
+        type: string
+    secrets:
+      HELM_REPO_TOKEN:
+        required: false
+
+jobs:
+  api-test:
+    name: API Test - ${{ inputs.service_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start application (Option B - localhost)
+        run: |
+          node app.js &
+          echo "APP_PID=$!" >> $GITHUB_ENV
+          sleep 3
+
+      - name: Wait for app to be ready
+        run: |
+          for i in {1..10}; do
+            if curl -s http://localhost:3000/health > /dev/null; then
+              echo "App is ready!"
+              break
+            fi
+            echo "Waiting for app... attempt $i"
+            sleep 2
+          done
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run API Tests (Newman)
+        run: |
+          newman run collection.json \
+            --env-var baseUrl=http://localhost:3000 \
+            --reporters cli \
+            --reporter-cli-no-banner
+
+      - name: Stop application
+        if: always()
+        run: kill $APP_PID 2>/dev/null || true
