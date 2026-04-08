@@ -27,9 +27,9 @@ on:
 
     secrets:
       DOCKERHUB_USERNAME:
-        required: false
+        required: true
       DOCKERHUB_TOKEN:
-        required: false
+        required: true
 
 jobs:
   build:
