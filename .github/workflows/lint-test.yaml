@@ -42,7 +42,9 @@ jobs:
           ./gitleaks detect \
             --source . \
             --no-git \
-            -v
+            --no-banner \
+            -v \
+            --exclude-path node_modules
 
       - name: Dependency Scan (npm audit)
         run: npm audit --audit-level=high
